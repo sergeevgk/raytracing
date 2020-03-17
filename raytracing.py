@@ -1,32 +1,6 @@
-"""
-MIT License
-
-Copyright (c) 2017 Cyrille Rossant
-
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
-
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
-
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
-"""
-
 import numpy as np
 import matplotlib.pyplot as plt
-
-w = 2000
-h = 1500
+from test import *
 
 
 def normalize(x):
@@ -125,61 +99,6 @@ def trace_ray(rayO, rayD):
     return obj, M, N, col_ray
 
 
-def add_sphere(position, radius, color, transparency=0.0, refrcoeff=0.0):
-    return dict(type='sphere', position=np.array(position),
-                radius=np.array(radius), color=np.array(color), reflection=.2,
-                transparency=transparency, refrcoeff=refrcoeff)
-
-
-def add_plane(position, normal):
-    return dict(type='plane', position=np.array(position),
-                normal=np.array(normal),
-                color=lambda M: (color_plane0
-                                 if (int(M[0] * 2) % 2) == (int(M[2] * 2) % 2) else color_plane1),
-                diffuse_c=.75, specular_c=.5, reflection=.25)
-
-
-# List of objects.
-color_plane0 = 1. * np.ones(3)
-color_plane1 = 0. * np.ones(3)
-# scene = [add_sphere([.75, .1, 1.], .6, [0., 0., 1.], transparency=0.7, refrcoeff=1.3),
-#          add_sphere([-.75, .1, 2.25], .6, [.5, .223, .5], transparency=0.9, refrcoeff=1.1),
-#          add_sphere([-2.75, .1, 3.5], .6, [1., .572, .184], transparency=1.0, refrcoeff=1.0),
-#          add_plane([0., -.5, 0.], [0., 1., 0.]),
-#          ]
-#
-# # Light position and color.
-# L = np.array([5., 5., -10.])
-# color_light = np.ones(3)
-
-
-scene = [add_sphere([.4, .1, 1.], .4, [0., 0., 1.], transparency=0.7, refrcoeff=2),
-         add_sphere([-.4, .1, 1.], .4, [0., 1., 0.], transparency=0.9, refrcoeff=1.5),
-         add_sphere([.0, .8, 1.], .4, [1., 0., 0.], transparency=0.5, refrcoeff=1.0),
-         add_plane([0., -.5, 0.], [0., 1., 0.]),
-         ]
-
-# Light position and color.
-L = np.array([4., 4., -10.])
-color_light = np.ones(3)
-
-# Default light and material parameters.
-ambient = .05
-diffuse_c = 1.
-specular_c = 1.
-specular_k = 50
-
-depth_max = 5  # Maximum number of light reflections.
-col = np.zeros(3)  # Current color.
-O = np.array([0., 0.35, -1.])  # Camera.
-Q = np.array([0., 0., 0.])  # Camera pointing to.
-img = np.zeros((h, w, 3))
-
-r = float(w) / h
-# Screen coordinates: x0, y0, x1, y1.
-S = (-1., -1. / r + .25, 1., 1. / r + .25)
-
-
 def refract(v, n, q):
     nv = np.dot(n, v)
 
@@ -220,6 +139,7 @@ def rt(rayO, rayD, reflection, col, depth, normalDirection):
 
 
 if __name__ == '__main__':
+    img = np.zeros((h, w, 3))
     for i, x in enumerate(np.linspace(S[0], S[2], w)):
         if i % 10 == 0:
             print(i / float(w) * 100, "%")
@@ -230,21 +150,9 @@ if __name__ == '__main__':
             depth = 0
             rayO, rayD = O, D
             reflection = 1.
-            # Loop through initial and secondary rays.
-            # while depth < depth_max:
-            #     traced = trace_ray(rayO, rayD)
-            #     if not traced:
-            #         break
-            #     obj, M, N, col_ray = traced
-            #     # Reflection: create a new ray.
-            #     rayO, rayD = M + N * .0001, normalize(rayD - 2 * np.dot(rayD, N) * N)
-            #     depth += 1
-            #     col += reflection * col_ray
-            #     reflection *= obj.get('reflection', 1.)
-
             normalDirection = 1
             rt(rayO, rayD, reflection, col, depth, normalDirection)
 
             img[h - j - 1, i, :] = np.clip(col, 0, 1)
 
-plt.imsave('fig.png', img)
+    plt.imsave(output_filename + '.png', img)
