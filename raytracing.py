@@ -13,7 +13,8 @@ def intersect_plane(O, D, P, N):
     # plane (P, N), or +inf if there is no intersection.
     # O and P are 3D points, D and N (normal) are normalized vectors.
     denom = np.dot(D, N)
-    if np.abs(denom) < 1e-6:
+    eps = 1e-6
+    if np.abs(denom) < eps:
         return np.inf
     d = np.dot(P - O, N) / denom
     if d < 0:
@@ -27,6 +28,7 @@ def intersect_sphere(O, D, S, R):
     # O and S are 3D points, D (direction) is a normalized vector, R is a scalar.
     a = np.dot(D, D)
     OS = O - S
+    # Quadratic equations & discriminant formulae
     b = 2 * np.dot(D, OS)
     c = np.dot(OS, OS) - R * R
     disc = b * b - 4 * a * c
@@ -85,9 +87,10 @@ def trace_ray(rayO, rayD):
     toO = normalize(O - M)
     # Shadow: find if the point is shadowed or not.
     col_shadow_coeff = 1.
+    relax_coeff = .0001
     for k, obj_sh in enumerate(scene):
         if k != obj_idx:
-            if intersect(M + N * .0001, toL, obj_sh) < np.inf:
+            if intersect(M + N * relax_coeff, toL, obj_sh) < np.inf:
                 col_shadow_coeff *= obj_sh.get('transparency', 0.)
     # Start computing the color.
     col_ray = ambient
@@ -123,7 +126,8 @@ def rt(rayO, rayD, reflection, col, depth, normalDirection):
     col += reflection * col_ray * (1 - obj.get('transparency', 0.))
     # Reflection: create a new ray.
     dir = normalize(rayD - 2 * np.dot(rayD, N) * N)
-    rayO1, rayD1 = M + N * normalDirection * .0001, dir
+    relax_coeff = .0001
+    rayO1, rayD1 = M + N * normalDirection * relax_coeff, dir
     if rt(rayO1, rayD1, reflection * obj.get('reflection', 1.), col, depth + 1, normalDirection):
         return False
 
@@ -131,7 +135,7 @@ def rt(rayO, rayD, reflection, col, depth, normalDirection):
     dir = refract(rayD, N, obj.get('refrcoeff', 1.))
     if dir is None:
         return False
-    rayO2, rayD2 = M - N * normalDirection * .0001, dir
+    rayO2, rayD2 = M - N * normalDirection * relax_coeff, dir
     if rt(rayO2, rayD2, reflection * obj.get('transparency', 1.), col, depth + 1, normalDirection * (-1)):
         return False
 
@@ -142,7 +146,7 @@ if __name__ == '__main__':
     img = np.zeros((h, w, 3))
     for i, x in enumerate(np.linspace(S[0], S[2], w)):
         if i % 10 == 0:
-            print(i / float(w) * 100, "%")
+            print(i / float(w) * 100, "%")  # print % of already made work at each 10th iteration
         for j, y in enumerate(np.linspace(S[1], S[3], h)):
             col[:] = 0
             Q[:2] = (x, y)

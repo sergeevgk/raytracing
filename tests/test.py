@@ -40,6 +40,7 @@ col = np.zeros(3)  # Current color.
 O = np.array([0., 0.35, -1.])  # Camera.
 Q = np.array([0., 0., 0.])  # Camera pointing to.
 
+# image width and height
 w = 1000
 h = 750
 
